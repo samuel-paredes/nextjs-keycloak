@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Authentication from "./authentication";
 
 const NavBar = () => {
   return (
@@ -16,11 +17,7 @@ const NavBar = () => {
           <h2 className="text-2xl font-bold hover:text-pink-200">Private</h2>
         </Link>
       </div>
-      <div className="flex w-1/4 justify-end py-3">
-        <button className="bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded">
-          Log In
-        </button>
-      </div>
+      <Authentication />
     </nav>
   );
 };
