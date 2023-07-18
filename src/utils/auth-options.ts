@@ -1,6 +1,32 @@
 import KeycloakProvider from "next-auth/providers/keycloak";
 import jwt_decode from "jwt-decode";
 import { AuthOptions } from "next-auth";
+import { JWT } from "next-auth/jwt";
+
+//Refresh an expired access token when needed
+const refreshAccessToken = async (token: JWT) => {
+  const response = await fetch(`${process.env.KEYCLOAK_REFRESH_TOKEN_URL}`, {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: process.env.KEYCLOAK_CLIENT_ID,
+      client_secret: process.env.KEYCLOAK_CLIENT_SECRET,
+      grant_type: "refresh_token",
+      refresh_token: token.refresh_token,
+    }),
+    method: "POST",
+  });
+  const refreshToken = await response.json();
+  if (!response.ok) throw refreshToken;
+
+  return {
+    ...token,
+    access_token: refreshToken.access_token,
+    decoded: jwt_decode(refreshToken.access_token),
+    id_token: refreshToken.id_token,
+    expires_at: Math.floor(Date.now() / 1000) + refreshToken.expires_in,
+    refresh_token: refreshToken.refresh_token,
+  };
+};
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -15,7 +41,6 @@ export const authOptions: AuthOptions = {
       const nowTimeStamp = Math.floor(Date.now() / 1000);
 
       if (account) {
-        //console.log("account:", account);
         // account is only available the first time this callback is called on a new session (after the user signs in)
         token.decoded = jwt_decode(account.access_token);
         token.access_token = account.access_token;
@@ -29,11 +54,17 @@ export const authOptions: AuthOptions = {
       } else {
         // token is expired, try to refresh it
         console.log("Token has expired. Will refresh...");
-        return token;
+        try {
+          const refreshedToken = await refreshAccessToken(token);
+          console.log("Token is refreshed.");
+          return refreshedToken;
+        } catch (error) {
+          console.error("Error refreshing access token", error);
+          return { ...token, error: "RefreshAccessTokenError" };
+        }
       }
     },
     async session({ session, token }) {
-      //console.log("TOKEN WHEN SESSION: ", token);
       // Send properties to the client
       session.access_token = token.access_token;
       session.id_token = token.id_token;

@@ -23,6 +23,7 @@ declare module "next-auth" {
     access_token: string;
     expires_at: number;
     id_token: string;
+    refresh_token: string;
   }
 }
 
@@ -31,8 +32,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     access_token: string;
     expires_at: number;
-    refreshTokenExpired: number;
     id_token: string;
+    refresh_token: string;
     error: string;
   }
 }

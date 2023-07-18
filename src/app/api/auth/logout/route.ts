@@ -13,9 +13,9 @@ export const GET = async () => {
       const resp = await fetch(url, { method: "GET" });
     } catch (err) {
       console.error(err);
-      return new Response({ status: 500 });
+      return new Response(null, { status: 500 });
     }
   }
 
-  return new Response({ status: 200 });
+  return new Response(null, { status: 200 });
 };
